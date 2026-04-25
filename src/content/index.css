@@ -1,0 +1,61 @@
+/* RailAssist – Tailwind base + custom overrides inside Shadow DOM */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset everything inside our shadow root */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:host {
+  all: initial;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Scrollbar styling */
+.ra-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.ra-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ra-scroll::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 99px;
+}
+.dark .ra-scroll::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* Slide-in animation */
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+.ra-panel {
+  animation: slideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Collapse transition */
+@keyframes slideOut {
+  from { transform: translateX(0);   opacity: 1; }
+  to   { transform: translateX(100%); opacity: 0; }
+}
+
+/* Input autofill override */
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 100px transparent inset !important;
+}
+
+/* Remove number arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

@@ -1,0 +1,1 @@
+chrome.runtime.onInstalled.addListener(()=>{console.log("[RailAssist] Extension installed.")});chrome.action.onClicked.addListener(e=>{e.id&&chrome.tabs.sendMessage(e.id,{type:"TOGGLE_SIDEBAR"}).catch(()=>{})});
