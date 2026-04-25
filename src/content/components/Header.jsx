@@ -1,7 +1,7 @@
 import React from 'react';
 import { Settings, HelpCircle, ChevronLeft, Moon, Sun } from 'lucide-react';
 
-export default function Header({ darkMode, onToggleDark, onCollapse }) {
+export default function Header({ darkMode, onToggleDark }) {
   return (
     <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
       {/* Logo + Title */}
@@ -37,13 +37,6 @@ export default function Header({ darkMode, onToggleDark, onCollapse }) {
           className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-all"
         >
           <Settings size={16} strokeWidth={2} />
-        </button>
-        <button
-          onClick={onCollapse}
-          title="Collapse sidebar"
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-all ml-1"
-        >
-          <ChevronLeft size={16} strokeWidth={2.5} />
         </button>
       </div>
     </div>

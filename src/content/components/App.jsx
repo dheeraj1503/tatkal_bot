@@ -110,7 +110,19 @@ export default function App({ shadowRoot }) {
       {/* Main panel */}
       {!collapsed && (
         <div className="ra-panel fixed top-0 right-0 w-[380px] h-screen flex flex-col bg-white dark:bg-gray-900 shadow-2xl border-l border-gray-100 dark:border-gray-800 z-[2147483646] font-sans">
-          <Header darkMode={darkMode} onToggleDark={toggleDark} onCollapse={() => setCollapsed(true)} />
+          
+          {/* Expanded tab handle */}
+          <button
+            onClick={() => setCollapsed(true)}
+            className="absolute top-1/2 -left-7 -translate-y-1/2 w-7 h-16 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 border-r-0 rounded-l-xl shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.1)] flex items-center justify-center text-gray-400 dark:text-gray-300 hover:text-brand-blue transition-colors z-[2147483647]"
+            title="Collapse RailAssist"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
+          <Header darkMode={darkMode} onToggleDark={toggleDark} />
 
           <div className="flex-1 overflow-y-auto ra-scroll">
             <div className="p-4 flex flex-col gap-5">
