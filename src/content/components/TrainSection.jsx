@@ -1,19 +1,7 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 
-const TRAIN_NAMES = {
-  '12951': 'Mumbai Rajdhani',
-  '12952': 'Mumbai Rajdhani',
-  '12004': 'Swarna Shatabdi',
-  '12003': 'Swarna Shatabdi',
-  '12260': 'Sealdah Duronto',
-  '12909': 'Garib Rath Express',
-  '12910': 'Garib Rath Express',
-  '22691': 'Rajdhani Express',
-  '12555': 'Gorakhdham Express',
-  '12957': 'Swarna Jayanti Rajdhani',
-  '12958': 'Swarna Jayanti Rajdhani',
-};
+import TRAIN_NAMES from '../utils/trains.json';
 
 export default function TrainSection({ journey, onChange }) {
   const update = (field, val) => onChange({ ...journey, [field]: val });
