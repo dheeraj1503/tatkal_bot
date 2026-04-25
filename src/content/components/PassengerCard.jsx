@@ -1,141 +1,83 @@
-import React, { useState } from 'react';
-import { User, Zap, Pencil, Trash2, Check, X } from 'lucide-react';
+import React from 'react';
+import { Trash2 } from 'lucide-react';
 
 const BERTH_OPTIONS  = ['No Pref', 'Lower', 'Middle', 'Upper', 'Side Lower', 'Side Upper'];
 const GENDER_OPTIONS = ['Male', 'Female', 'Transgender'];
 
 export default function PassengerCard({ passenger, index, onUpdate, onDelete }) {
-  const [editing, setEditing] = useState(false);
-  const [draft,   setDraft]   = useState(passenger);
+  const update = (field, val) => onUpdate({ ...passenger, [field]: val });
 
-  const save = () => { onUpdate(draft); setEditing(false); };
-  const cancel = () => { setDraft(passenger); setEditing(false); };
-
-  if (editing) {
-    return (
-      <div className="bg-white dark:bg-gray-800 border border-brand-blue/40 rounded-2xl p-4 shadow-sm animate-fade-in">
-        {/* Edit form */}
-        <div className="flex flex-col gap-3">
-          {/* Name */}
-          <div>
-            <label className="block text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Full Name</label>
-            <input
-              autoFocus
-              value={draft.name}
-              onChange={e => setDraft(d => ({ ...d, name: e.target.value }))}
-              placeholder="Enter passenger name"
-              className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-[13px] font-semibold text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-blue/30"
-            />
+  return (
+    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between p-3 border-b border-gray-50 dark:border-gray-700/30">
+        <div className="flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-brand-blue dark:text-blue-400 flex items-center justify-center text-[11px] font-bold">
+            {index + 1}
           </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {/* Age */}
-            <div>
-              <label className="block text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Age</label>
-              <input
-                type="number"
-                value={draft.age}
-                onChange={e => setDraft(d => ({ ...d, age: e.target.value }))}
-                placeholder="Enter age"
-                min="1" max="120"
-                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-[13px] font-semibold text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-blue/30"
-              />
-            </div>
-            {/* Gender */}
-            <div>
-              <label className="block text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Gender</label>
-              <select
-                value={draft.gender}
-                onChange={e => setDraft(d => ({ ...d, gender: e.target.value }))}
-                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-[13px] font-semibold text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-blue/30"
-              >
-                {GENDER_OPTIONS.map(g => <option key={g}>{g}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Berth */}
-          <div>
-            <label className="block text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Berth Preference</label>
-            <div className="flex flex-wrap gap-1.5">
-              {BERTH_OPTIONS.map(b => (
-                <button
-                  key={b}
-                  type="button"
-                  onClick={() => setDraft(d => ({ ...d, berth: b }))}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
-                    draft.berth === b
-                      ? 'bg-brand-blue text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  {b}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Save / Cancel */}
-          <div className="flex gap-2 mt-1">
-            <button
-              onClick={save}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-brand-blue text-white rounded-xl text-[12px] font-bold hover:bg-blue-700 transition-colors"
-            >
-              <Check size={13} strokeWidth={2.5} /> Save
-            </button>
-            <button
-              onClick={cancel}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl text-[12px] font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              <X size={13} strokeWidth={2.5} /> Cancel
-            </button>
-          </div>
+          <span className="text-[13px] font-bold text-gray-800 dark:text-white">
+            Passenger {index + 1}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 text-[11px] font-bold rounded-lg border border-blue-100/50 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+            Fill
+          </button>
+          <button onClick={onDelete} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
+            <Trash2 size={16} />
+          </button>
         </div>
       </div>
-    );
-  }
 
-  /* ── View mode ── */
-  return (
-    <div className="group bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 rounded-2xl p-4 shadow-sm hover:border-gray-200 dark:hover:border-gray-600 transition-all">
-      <div className="flex items-center gap-3">
-        {/* Avatar */}
-        <div className="w-11 h-11 flex-shrink-0 rounded-2xl bg-gray-50 dark:bg-gray-700 border border-gray-100 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500">
-          <User size={22} strokeWidth={1.5} />
+      {/* Body */}
+      <div className="p-4 flex flex-col gap-4">
+        {/* Name */}
+        <div>
+          <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">NAME</label>
+          <input
+            value={passenger.name}
+            onChange={e => update('name', e.target.value)}
+            placeholder="Full Name"
+            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-blue/50 focus:ring-2 focus:ring-brand-blue/10 transition-all placeholder-gray-400"
+          />
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <p className="text-[14px] font-bold text-gray-900 dark:text-white truncate">
-            {passenger.name || `Passenger ${index + 1}`}
-          </p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold mt-0.5 uppercase tracking-wide">
-            {[passenger.age, passenger.gender, passenger.berth].filter(Boolean).join(' • ')}
-          </p>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Age */}
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">AGE</label>
+            <input
+              type="number"
+              value={passenger.age}
+              onChange={e => update('age', e.target.value)}
+              placeholder="Age"
+              min="1" max="120"
+              className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-blue/50 focus:ring-2 focus:ring-brand-blue/10 transition-all placeholder-gray-400"
+            />
+          </div>
+          {/* Gender */}
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">GENDER</label>
+            <select
+              value={passenger.gender}
+              onChange={e => update('gender', e.target.value)}
+              className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-blue/50 focus:ring-2 focus:ring-brand-blue/10 transition-all"
+            >
+              {GENDER_OPTIONS.map(g => <option key={g}>{g}</option>)}
+            </select>
+          </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            title="Auto-fill"
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+        {/* Berth */}
+        <div>
+          <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">BERTH PREFERENCE</label>
+          <select
+            value={passenger.berth}
+            onChange={e => update('berth', e.target.value)}
+            className="w-full bg-white dark:bg-gray-800 border border-brand-blue/50 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
           >
-            <Zap size={14} strokeWidth={2.5} />
-          </button>
-          <button
-            onClick={() => { setDraft(passenger); setEditing(true); }}
-            title="Edit"
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-          >
-            <Pencil size={14} strokeWidth={2} />
-          </button>
-          <button
-            onClick={onDelete}
-            title="Delete"
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 text-red-400 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-          >
-            <Trash2 size={14} strokeWidth={2} />
-          </button>
+            {BERTH_OPTIONS.map(b => <option key={b}>{b}</option>)}
+          </select>
         </div>
       </div>
     </div>
