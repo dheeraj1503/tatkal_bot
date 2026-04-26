@@ -34,7 +34,6 @@ export const fillJourney = async (journey) => {
     trigger(input, 'input');
     trigger(input, 'keydown');
 
-    // Wait for dropdown
     const option = await waitForSelector('li.ui-autocomplete-list-item', 1500);
     if (option) {
       option.click();
@@ -42,9 +41,59 @@ export const fillJourney = async (journey) => {
     }
   };
 
-  // 1. Stations (Parallelish start)
+  const selectDropdownOption = async (containerSelector, targetValue, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      const container = document.querySelector(containerSelector);
+      if (!container) {
+        await wait(200);
+        continue;
+      }
+
+      const triggerBtn = container.querySelector('.ui-dropdown-trigger') || container;
+      triggerBtn.click();
+      
+      // Wait for the dropdown panel to appear and stabilize
+      await wait(500);
+      
+      // Only look at visible items to avoid picking up leftover options from other dropdowns
+      const allItems = Array.from(document.querySelectorAll('li.ui-dropdown-item'));
+      const visibleItems = allItems.filter(el => {
+        const style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null;
+      });
+
+      const match = visibleItems.find(item => {
+        const text = item.textContent?.trim().toUpperCase() || '';
+        const label = item.getAttribute('aria-label')?.trim().toUpperCase() || '';
+        const val = targetValue.toUpperCase();
+        return text === val || label === val || text.includes(val) || label.includes(val);
+      });
+
+      if (match) {
+        match.click();
+        
+        trigger(container, 'change');
+        trigger(container, 'input');
+        const hiddenInput = container.querySelector('input[type="hidden"]') || container.querySelector('select');
+        if (hiddenInput) {
+          trigger(hiddenInput, 'change');
+          trigger(hiddenInput, 'input');
+        }
+
+        console.log(`RailAssist: Successfully selected ${targetValue}`);
+        return true;
+      }
+      
+      console.warn(`RailAssist: Selection attempt ${i+1} for ${targetValue} failed, retrying...`);
+      document.body.click(); // Close any stuck overlays
+      await wait(300);
+    }
+    return false;
+  };
+
+  // 1. Stations
   selectStation('From station', from);
-  await wait(400); // Small gap before starting 'To'
+  await wait(400); 
   await selectStation('To station', to);
 
   // 2. Date
@@ -55,39 +104,19 @@ export const fillJourney = async (journey) => {
     dateInput.value = formattedDate;
     trigger(dateInput, 'input');
     trigger(dateInput, 'change');
-    // Close calendar
     dateInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   }
 
-  // 3. Class Dropdown
-  const classDropdown = document.querySelector('p-dropdown[formcontrolname="journeyClass"] .ui-dropdown-trigger');
-  if (classDropdown && trainClass) {
-    classDropdown.click();
-    const target = await waitForSelector('li.ui-dropdown-item', 1000);
-    if (target) {
-      const allOptions = Array.from(document.querySelectorAll('li.ui-dropdown-item'));
-      const match = allOptions.find(opt => opt.textContent.includes(trainClass));
-      if (match) match.click();
-    }
-  }
+  // 3. Class
+  await wait(300);
+  await selectDropdownOption('p-dropdown[formcontrolname="journeyClass"]', trainClass);
 
-  // 4. Quota Dropdown
-  await wait(200);
-  const quotaDropdown = document.querySelector('p-dropdown[formcontrolname="quota"] .ui-dropdown-trigger');
-  if (quotaDropdown && quota) {
-    quotaDropdown.click();
-    const target = await waitForSelector('li.ui-dropdown-item', 1000);
-    if (target) {
-      const allOptions = Array.from(document.querySelectorAll('li.ui-dropdown-item'));
-      const match = allOptions.find(opt => 
-        opt.textContent.toUpperCase().includes(quota.toUpperCase()) ||
-        opt.getAttribute('aria-label')?.toUpperCase().includes(quota.toUpperCase())
-      );
-      if (match) match.click();
-    }
-  }
+  // 4. Quota
+  await wait(400);
+  // Using the exact formcontrolname found in your HTML snippet
+  await selectDropdownOption('p-dropdown[formcontrolname="journeyQuota"]', quota);
 
-  console.log('RailAssist: Journey fill fast sequence complete');
+  console.log('RailAssist: Universal journey fill sequence complete');
 };
 
 export const fillCredentials = (username, password) => {
