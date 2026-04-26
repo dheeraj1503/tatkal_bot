@@ -8,6 +8,7 @@ import TrainSection from './TrainSection';
 import PassengerSection from './PassengerSection';
 import PaymentSection from './PaymentSection';
 import { getTickets, saveTickets, getDarkMode, saveDarkMode } from '../../utils/storage';
+import { findAndHighlightTrain } from '../utils/autofill';
 
 const makeTicket = () => {
   const tomorrow = new Date();
@@ -40,6 +41,8 @@ export default function App({ shadowRoot }) {
   const [collapsed,    setCollapsed]    = useState(false);
   const [loaded,       setLoaded]       = useState(false);
 
+  const ticket = tickets[activeIdx] ?? tickets[0];
+
   /* ── Load from storage ── */
   useEffect(() => {
     (async () => {
@@ -62,14 +65,39 @@ export default function App({ shadowRoot }) {
     host.classList.toggle('dark', darkMode);
   }, [darkMode, shadowRoot]);
 
+  /* ── Auto-highlight train on results page ── */
+  useEffect(() => {
+    if (!loaded) return;
+    
+    const checkAndHighlight = () => {
+      if (window.location.href.includes('/booking/train-list')) {
+        const trainNum = ticket?.journey?.trainNumber;
+        if (trainNum) {
+          findAndHighlightTrain(trainNum);
+        }
+      }
+    };
+
+    // Run once on mount/load
+    checkAndHighlight();
+
+    // Safer URL monitoring for SPAs
+    let lastUrl = window.location.href;
+    const timer = setInterval(() => {
+      if (window.location.href !== lastUrl) {
+        lastUrl = window.location.href;
+        checkAndHighlight();
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [loaded, ticket?.journey?.trainNumber]);
+
   const toggleDark = useCallback(async () => {
     const next = !darkMode;
     setDarkMode(next);
     await saveDarkMode(next);
   }, [darkMode]);
-
-  const ticket = tickets[activeIdx] ?? tickets[0];
-
   const updateTicket = useCallback((fn) => {
     setTickets(prev => {
       const next = [...prev];

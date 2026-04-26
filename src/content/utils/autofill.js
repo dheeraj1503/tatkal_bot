@@ -140,6 +140,85 @@ export const fillJourney = async (journey) => {
   console.log('RailAssist: Universal journey fill sequence complete');
 };
 
+export const findAndHighlightTrain = async (trainNumber) => {
+  if (!trainNumber) return;
+
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  // 2. WAIT FOR TRAIN LIST
+  let attempts = 0;
+  let cards = [];
+  const selector = ".form-group.no-pad.col-xs-12.bull-back.border-all";
+  
+  while (attempts < 20) {
+    cards = Array.from(document.querySelectorAll(selector));
+    if (cards.length > 0) break;
+    await wait(500);
+    attempts++;
+  }
+
+  if (cards.length === 0) {
+    console.warn('RailAssist: No train cards found on page with selector: ' + selector);
+    return;
+  }
+
+  // 4. MATCH TRAIN NUMBER
+  let targetCard = null;
+  for (const card of cards) {
+    const strongEl = card.querySelector('strong');
+    if (strongEl) {
+      const text = strongEl.textContent;
+      const match = text.match(/\((\d{5})\)/);
+      if (match && match[1] === trainNumber) {
+        targetCard = card;
+        break;
+      }
+    }
+  }
+
+  // 5. SCROLL TO MATCH
+  if (targetCard) {
+    console.log(`RailAssist: Found and matching train ${trainNumber}`);
+    
+    targetCard.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+    
+    // 6. HIGHLIGHT MATCHED TRAIN
+    targetCard.style.border = "2px solid #ff6600";
+    targetCard.style.boxShadow = "0 0 10px rgba(255,102,0,0.6)";
+    targetCard.style.transition = "all 0.3s ease";
+    
+    // Optional: temporary background highlight
+    const originalBg = targetCard.style.backgroundColor;
+    targetCard.style.backgroundColor = "rgba(255, 102, 0, 0.05)";
+    
+    // Add Ra-Highlight label if not present
+    if (!targetCard.querySelector('.ra-highlight-label')) {
+      const label = document.createElement('div');
+      label.className = 'ra-highlight-label';
+      label.textContent = 'SELECTED TRAIN';
+      label.style.cssText = `
+        position: absolute;
+        top: -10px;
+        left: 15px;
+        background: #ff6600;
+        color: white;
+        padding: 1px 8px;
+        border-radius: 4px;
+        font-size: 9px;
+        font-weight: bold;
+        z-index: 5;
+      `;
+      targetCard.style.position = 'relative';
+      targetCard.appendChild(label);
+    }
+  } else {
+    console.warn(`RailAssist: Train ${trainNumber} not found in DOM`);
+  }
+};
+
 export const fillCredentials = (username, password) => {
   const findAndFill = () => {
     const userField = 
