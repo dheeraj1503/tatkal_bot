@@ -21,29 +21,76 @@ export const fillJourney = async (journey) => {
   };
 
   const selectStation = async (labelPart, value) => {
-    const input = document.querySelector(`input[aria-label*="${labelPart}"]`);
-    if (!input || !value) return;
+    // 1. Identify common variations for From/To station selectors
+    const isFrom = labelPart.toLowerCase().includes('from');
+    const selectors = [
+      // Standard homepage
+      `input[aria-label*="${labelPart}"]`,
+      // Result page variations
+      `p-autocomplete[formcontrolname="${isFrom ? 'fromStation' : 'toStation'}"] input`,
+      `p-autocomplete[formcontrolname="${isFrom ? 'origin' : 'destination'}"] input`,
+      // General fallbacks
+      `input[placeholder*="${labelPart}"]`,
+      `input[id*="${isFrom ? 'origin' : 'destination'}"]`,
+      `input[id*="${isFrom ? 'from' : 'to'}"]`
+    ];
+    
+    let input = null;
+    for (const sel of selectors) {
+      input = document.querySelector(sel);
+      if (input && input.offsetParent !== null) break; // Ensure it's visible
+    }
 
+    // Fallback: search by label text if still not found
+    if (!input) {
+      const allLabels = Array.from(document.querySelectorAll('label'));
+      const targetLabel = allLabels.find(l => l.textContent.toLowerCase().includes(labelPart.toLowerCase()));
+      if (targetLabel) {
+        input = targetLabel.parentElement.querySelector('input');
+      }
+    }
+
+    if (!input || !value) {
+      console.warn(`RailAssist: Could not find ${labelPart} input`);
+      return;
+    }
+
+    console.log(`RailAssist: Filling ${labelPart} with ${value}`);
     input.focus();
     input.click();
+    
+    // Clear and trigger Angular detection
     input.value = '';
     trigger(input, 'input');
+    await wait(100);
     
-    await wait(50);
     input.value = value;
     trigger(input, 'input');
     trigger(input, 'keydown');
-
-    const option = await waitForSelector('li.ui-autocomplete-list-item', 1500);
+    
+    // Wait longer for autocomplete to populate
+    const option = await waitForSelector('li.ui-autocomplete-list-item', 2000);
     if (option) {
       option.click();
-      console.log(`RailAssist: Selected ${labelPart} ${value}`);
+      console.log(`RailAssist: Clicked autocomplete for ${value}`);
+    } else {
+      // Last resort: press enter to trigger autocomplete
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      console.log(`RailAssist: No autocomplete found for ${value}, sent Enter`);
     }
   };
 
   const selectDropdownOption = async (containerSelector, targetValue, retries = 3) => {
+    // containerSelector could be a single selector or an array
+    const selectors = Array.isArray(containerSelector) ? containerSelector : [containerSelector];
+    
     for (let i = 0; i < retries; i++) {
-      const container = document.querySelector(containerSelector);
+      let container = null;
+      for (const sel of selectors) {
+        container = document.querySelector(sel);
+        if (container) break;
+      }
+
       if (!container) {
         await wait(200);
         continue;
@@ -52,10 +99,8 @@ export const fillJourney = async (journey) => {
       const triggerBtn = container.querySelector('.ui-dropdown-trigger') || container;
       triggerBtn.click();
       
-      // Wait for the dropdown panel to appear and stabilize
       await wait(500);
       
-      // Only look at visible items to avoid picking up leftover options from other dropdowns
       const allItems = Array.from(document.querySelectorAll('li.ui-dropdown-item'));
       const visibleItems = allItems.filter(el => {
         const style = window.getComputedStyle(el);
@@ -71,28 +116,20 @@ export const fillJourney = async (journey) => {
 
       if (match) {
         match.click();
-        
         trigger(container, 'change');
         trigger(container, 'input');
-        const hiddenInput = container.querySelector('input[type="hidden"]') || container.querySelector('select');
-        if (hiddenInput) {
-          trigger(hiddenInput, 'change');
-          trigger(hiddenInput, 'input');
-        }
-
         console.log(`RailAssist: Successfully selected ${targetValue}`);
         return true;
       }
       
-      console.warn(`RailAssist: Selection attempt ${i+1} for ${targetValue} failed, retrying...`);
-      document.body.click(); // Close any stuck overlays
+      document.body.click(); 
       await wait(300);
     }
     return false;
   };
 
   // 1. Stations
-  selectStation('From station', from);
+  await selectStation('From station', from);
   await wait(400); 
   await selectStation('To station', to);
 
@@ -103,53 +140,47 @@ export const fillJourney = async (journey) => {
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const targetMonthName = monthNames[tMonth - 1];
 
-    const input = document.querySelector('p-calendar input');
+    // Try both homepage and results page date input selectors
+    const dateInputSelectors = ['p-calendar[formcontrolname="journeyDate"] input', 'p-calendar input'];
+    let input = null;
+    for (const sel of dateInputSelectors) {
+      input = document.querySelector(sel);
+      if (input) break;
+    }
+
     if (!input) return;
 
-    // Open Picker
     input.click();
     await wait(500);
 
     let popup = document.querySelector('.ui-datepicker');
-    if (!popup) {
-      console.warn('RailAssist: Calendar popup not found');
-      return;
-    }
+    if (!popup) return;
 
-    // Navigation Loop
     let attempts = 0;
-    while (attempts < 12) { // Max 12 months ahead
+    while (attempts < 12) {
       const currentMonthEl = popup.querySelector('.ui-datepicker-month');
       const currentYearEl = popup.querySelector('.ui-datepicker-year');
-      
       const currentMonth = currentMonthEl?.textContent?.trim();
       const currentYear = parseInt(currentYearEl?.textContent?.trim() || "0");
 
       if (currentMonth === targetMonthName && currentYear === tYear) break;
 
-      // Decide direction
       const isFuture = tYear > currentYear || (tYear === currentYear && (monthNames.indexOf(targetMonthName) > monthNames.indexOf(currentMonth)));
       const navBtn = popup.querySelector(isFuture ? '.ui-datepicker-next' : '.ui-datepicker-prev');
-      
       if (!navBtn) break;
       navBtn.click();
       await wait(300);
       attempts++;
     }
 
-    // Select Day
     const days = Array.from(popup.querySelectorAll('td a.ui-state-default, td span.ui-state-default'));
     const dayEl = days.find(el => el.textContent.trim() === String(tDay) && !el.parentElement.classList.contains('ui-datepicker-other-month'));
     
     if (dayEl) {
       dayEl.click();
-      console.log(`RailAssist: Selected date ${tDay} ${targetMonthName} ${tYear} via calendar`);
     } else {
-      console.warn(`RailAssist: Could not find day ${tDay} in calendar`);
-      // Fallback: set value manually if calendar click fails
       input.value = `${String(tDay).padStart(2, '0')}/${String(tMonth).padStart(2, '0')}/${tYear}`;
       trigger(input, 'input');
-      trigger(input, 'change');
     }
   };
 
@@ -157,11 +188,11 @@ export const fillJourney = async (journey) => {
 
   // 3. Class
   await wait(300);
-  await selectDropdownOption('p-dropdown[formcontrolname="journeyClass"]', trainClass);
+  await selectDropdownOption(['p-dropdown[formcontrolname="journeyClass"]', 'p-dropdown[formcontrolname="class"]'], trainClass);
 
   // 4. Quota
   await wait(400);
-  await selectDropdownOption('p-dropdown[formcontrolname="journeyQuota"]', quota);
+  await selectDropdownOption(['p-dropdown[formcontrolname="journeyQuota"]', 'p-dropdown[formcontrolname="quota"]'], quota);
 
   // 5. Highlight Search Button
   await wait(500);
