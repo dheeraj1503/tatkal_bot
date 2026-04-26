@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowDownUp, ChevronDown } from 'lucide-react';
+import { Zap, ArrowDownUp, ChevronDown } from 'lucide-react';
+import { fillJourney } from '../utils/autofill';
 
 const CLASS_OPTIONS  = ['SL', '3A', '2A', '1A', 'CC', '2S', 'EC'];
 const QUOTA_OPTIONS  = ['GENERAL', 'TATKAL', 'PREMIUM TATKAL', 'LADIES', 'LOWER BERTH'];
@@ -16,8 +17,6 @@ function stationName(code) {
   return STATION_NAMES[code?.toUpperCase()] || '';
 }
 
-
-
 export default function JourneySection({ journey, onChange }) {
   const [classOpen,  setClassOpen]  = useState(false);
   const [quotaOpen,  setQuotaOpen]  = useState(false);
@@ -30,9 +29,23 @@ export default function JourneySection({ journey, onChange }) {
     to:   journey.from, toName:   journey.fromName,
   });
 
+  const handleFill = () => {
+    fillJourney(journey);
+  };
 
   return (
     <section className="bg-white dark:bg-gray-800/60 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50 shadow-sm flex flex-col gap-4">
+      {/* Section header */}
+      <div className="flex items-center justify-between px-0.5">
+        <h3 className="text-[13px] font-bold text-gray-800 dark:text-white uppercase tracking-tight">Journey Details</h3>
+        <button
+          onClick={handleFill}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 rounded-lg border border-blue-100 dark:border-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all text-[11px] font-bold"
+        >
+          <Zap size={13} strokeWidth={2.5} className="fill-brand-blue dark:fill-blue-400" />
+          Fill
+        </button>
+      </div>
 
       {/* FROM / TO with swap */}
       <div className="relative flex flex-col gap-2">

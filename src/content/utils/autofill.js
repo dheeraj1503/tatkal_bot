@@ -1,3 +1,67 @@
+export const fillJourney = (journey) => {
+  const { from, to, date, trainClass, quota } = journey;
+
+  // Helper to trigger events
+  const trigger = (el, type) => {
+    el.dispatchEvent(new Event(type, { bubbles: true }));
+  };
+
+  // 1. Fill From/To Station (AutoComplete)
+  const fillStation = async (selector, value) => {
+    const input = document.querySelector(selector);
+    if (!input || !value) return;
+
+    input.value = value;
+    trigger(input, 'input');
+    trigger(input, 'focus');
+
+    // Wait for dropdown and click first option
+    setTimeout(() => {
+      const options = document.querySelectorAll('.ui-autocomplete-list-item, .ui-state-highlight');
+      if (options.length > 0) {
+        options[0].click();
+      }
+    }, 500);
+  };
+
+  fillStation('p-autocomplete[formcontrolname="fromStation"] input', from);
+  setTimeout(() => fillStation('p-autocomplete[formcontrolname="toStation"] input', to), 600);
+
+  // 2. Fill Date
+  const dateInput = document.querySelector('p-calendar[formcontrolname="journeyDate"] input');
+  if (dateInput && date) {
+    // IRCTC date format is DD-MM-YYYY
+    const [y, m, d] = date.split('-');
+    const formattedDate = `${d}-${m}-${y}`;
+    dateInput.value = formattedDate;
+    trigger(dateInput, 'input');
+  }
+
+  // 3. Fill Class
+  const classDropdown = document.querySelector('p-dropdown[formcontrolname="journeyClass"]');
+  if (classDropdown && trainClass) {
+    classDropdown.click();
+    setTimeout(() => {
+      const classOptions = Array.from(document.querySelectorAll('.ui-dropdown-item'));
+      const target = classOptions.find(opt => opt.textContent.includes(trainClass));
+      if (target) target.click();
+    }, 300);
+  }
+
+  // 4. Fill Quota
+  const quotaDropdown = document.querySelector('p-dropdown[formcontrolname="quota"]');
+  if (quotaDropdown && quota) {
+    quotaDropdown.click();
+    setTimeout(() => {
+      const quotaOptions = Array.from(document.querySelectorAll('.ui-dropdown-item'));
+      const target = quotaOptions.find(opt => opt.textContent.toUpperCase().includes(quota.toUpperCase()));
+      if (target) target.click();
+    }, 600);
+  }
+
+  console.log('RailAssist: Filled journey details');
+};
+
 export const fillCredentials = (username, password) => {
   const findAndFill = () => {
     const userField = 
