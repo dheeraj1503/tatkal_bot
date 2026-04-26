@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 
-import TRAIN_NAMES from '../utils/trains.json';
+
 
 export default function TrainSection({ journey, onChange }) {
   const update = (field, val) => onChange({ ...journey, [field]: val });
@@ -25,12 +25,6 @@ export default function TrainSection({ journey, onChange }) {
               className="w-full bg-transparent border-none outline-none font-semibold text-[13px] text-gray-800 dark:text-white p-0 placeholder-gray-300 dark:placeholder-gray-600"
             />
           </div>
-          {/* Display Name Below Input */}
-          {TRAIN_NAMES[journey.trainNumber] && (
-            <span className="text-[10px] font-bold text-brand-blue dark:text-blue-400 px-1 uppercase tracking-wider">
-              {TRAIN_NAMES[journey.trainNumber]}
-            </span>
-          )}
         </div>
 
         <button

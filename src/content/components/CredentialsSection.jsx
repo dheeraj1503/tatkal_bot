@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { Zap, Eye, EyeOff } from 'lucide-react';
+import { fillCredentials } from '../utils/autofill';
 
 export default function CredentialsSection({ credentials, onChange }) {
   const [showPass, setShowPass] = useState(false);
 
   const update = (field, val) => onChange({ ...credentials, [field]: val });
+
+  const handleFill = () => {
+    fillCredentials(credentials.username, credentials.password);
+  };
 
   return (
     <section className="flex flex-col gap-3">
@@ -12,6 +17,7 @@ export default function CredentialsSection({ credentials, onChange }) {
       <div className="flex items-center justify-between px-0.5">
         <h3 className="text-[13px] font-bold text-gray-800 dark:text-white">IRCTC Credentials</h3>
         <button
+          onClick={handleFill}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 rounded-lg border border-blue-100 dark:border-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all text-[11px] font-bold"
         >
           <Zap size={13} strokeWidth={2.5} className="fill-brand-blue dark:fill-blue-400" />
