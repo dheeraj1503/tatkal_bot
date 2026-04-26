@@ -1,65 +1,93 @@
-export const fillJourney = (journey) => {
+export const fillJourney = async (journey) => {
   const { from, to, date, trainClass, quota } = journey;
 
-  // Helper to trigger events
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  const waitForSelector = (selector, timeout = 3000) => {
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      const check = () => {
+        const el = document.querySelector(selector);
+        if (el) resolve(el);
+        else if (Date.now() - start > timeout) resolve(null);
+        else setTimeout(check, 50);
+      };
+      check();
+    });
+  };
+
   const trigger = (el, type) => {
     el.dispatchEvent(new Event(type, { bubbles: true }));
   };
 
-  // 1. Fill From/To Station (AutoComplete)
-  const fillStation = async (selector, value) => {
-    const input = document.querySelector(selector);
+  const selectStation = async (labelPart, value) => {
+    const input = document.querySelector(`input[aria-label*="${labelPart}"]`);
     if (!input || !value) return;
 
+    input.focus();
+    input.click();
+    input.value = '';
+    trigger(input, 'input');
+    
+    await wait(50);
     input.value = value;
     trigger(input, 'input');
-    trigger(input, 'focus');
+    trigger(input, 'keydown');
 
-    // Wait for dropdown and click first option
-    setTimeout(() => {
-      const options = document.querySelectorAll('.ui-autocomplete-list-item, .ui-state-highlight');
-      if (options.length > 0) {
-        options[0].click();
-      }
-    }, 500);
+    // Wait for dropdown
+    const option = await waitForSelector('li.ui-autocomplete-list-item', 1500);
+    if (option) {
+      option.click();
+      console.log(`RailAssist: Selected ${labelPart} ${value}`);
+    }
   };
 
-  fillStation('p-autocomplete[formcontrolname="fromStation"] input', from);
-  setTimeout(() => fillStation('p-autocomplete[formcontrolname="toStation"] input', to), 600);
+  // 1. Stations (Parallelish start)
+  selectStation('From station', from);
+  await wait(400); // Small gap before starting 'To'
+  await selectStation('To station', to);
 
-  // 2. Fill Date
-  const dateInput = document.querySelector('p-calendar[formcontrolname="journeyDate"] input');
+  // 2. Date
+  const dateInput = document.querySelector('p-calendar input');
   if (dateInput && date) {
-    // IRCTC date format is DD-MM-YYYY
     const [y, m, d] = date.split('-');
-    const formattedDate = `${d}-${m}-${y}`;
+    const formattedDate = `${d}/${m}/${y}`;
     dateInput.value = formattedDate;
     trigger(dateInput, 'input');
+    trigger(dateInput, 'change');
+    // Close calendar
+    dateInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   }
 
-  // 3. Fill Class
-  const classDropdown = document.querySelector('p-dropdown[formcontrolname="journeyClass"]');
+  // 3. Class Dropdown
+  const classDropdown = document.querySelector('p-dropdown[formcontrolname="journeyClass"] .ui-dropdown-trigger');
   if (classDropdown && trainClass) {
     classDropdown.click();
-    setTimeout(() => {
-      const classOptions = Array.from(document.querySelectorAll('.ui-dropdown-item'));
-      const target = classOptions.find(opt => opt.textContent.includes(trainClass));
-      if (target) target.click();
-    }, 300);
+    const target = await waitForSelector('li.ui-dropdown-item', 1000);
+    if (target) {
+      const allOptions = Array.from(document.querySelectorAll('li.ui-dropdown-item'));
+      const match = allOptions.find(opt => opt.textContent.includes(trainClass));
+      if (match) match.click();
+    }
   }
 
-  // 4. Fill Quota
-  const quotaDropdown = document.querySelector('p-dropdown[formcontrolname="quota"]');
+  // 4. Quota Dropdown
+  await wait(200);
+  const quotaDropdown = document.querySelector('p-dropdown[formcontrolname="quota"] .ui-dropdown-trigger');
   if (quotaDropdown && quota) {
     quotaDropdown.click();
-    setTimeout(() => {
-      const quotaOptions = Array.from(document.querySelectorAll('.ui-dropdown-item'));
-      const target = quotaOptions.find(opt => opt.textContent.toUpperCase().includes(quota.toUpperCase()));
-      if (target) target.click();
-    }, 600);
+    const target = await waitForSelector('li.ui-dropdown-item', 1000);
+    if (target) {
+      const allOptions = Array.from(document.querySelectorAll('li.ui-dropdown-item'));
+      const match = allOptions.find(opt => 
+        opt.textContent.toUpperCase().includes(quota.toUpperCase()) ||
+        opt.getAttribute('aria-label')?.toUpperCase().includes(quota.toUpperCase())
+      );
+      if (match) match.click();
+    }
   }
 
-  console.log('RailAssist: Filled journey details');
+  console.log('RailAssist: Journey fill fast sequence complete');
 };
 
 export const fillCredentials = (username, password) => {
