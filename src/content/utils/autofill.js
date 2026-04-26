@@ -113,8 +113,29 @@ export const fillJourney = async (journey) => {
 
   // 4. Quota
   await wait(400);
-  // Using the exact formcontrolname found in your HTML snippet
   await selectDropdownOption('p-dropdown[formcontrolname="journeyQuota"]', quota);
+
+  // 5. Highlight Search Button
+  await wait(500);
+  const searchBtn = document.querySelector('button.train_Search');
+  if (searchBtn) {
+    searchBtn.style.transition = 'all 0.3s ease';
+    searchBtn.style.boxShadow = '0 0 20px 5px rgba(251, 146, 60, 0.8)'; // Brand orange glow
+    searchBtn.style.transform = 'scale(1.05)';
+    searchBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Add a pulse animation
+    searchBtn.animate([
+      { boxShadow: '0 0 0px 0px rgba(251, 146, 60, 0)' },
+      { boxShadow: '0 0 20px 10px rgba(251, 146, 60, 0.6)' },
+      { boxShadow: '0 0 0px 0px rgba(251, 146, 60, 0)' }
+    ], {
+      duration: 1500,
+      iterations: Infinity
+    });
+    
+    console.log('RailAssist: Highlighted search button');
+  }
 
   console.log('RailAssist: Universal journey fill sequence complete');
 };
