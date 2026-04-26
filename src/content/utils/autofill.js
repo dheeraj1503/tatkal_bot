@@ -96,16 +96,64 @@ export const fillJourney = async (journey) => {
   await wait(400); 
   await selectStation('To station', to);
 
-  // 2. Date
-  const dateInput = document.querySelector('p-calendar input');
-  if (dateInput && date) {
-    const [y, m, d] = date.split('-');
-    const formattedDate = `${d}/${m}/${y}`;
-    dateInput.value = formattedDate;
-    trigger(dateInput, 'input');
-    trigger(dateInput, 'change');
-    dateInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-  }
+  // 2. Date (Robust Calendar Interaction)
+  const selectCalendarDate = async (targetDate) => {
+    if (!targetDate) return;
+    const [tYear, tMonth, tDay] = targetDate.split('-').map(Number);
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const targetMonthName = monthNames[tMonth - 1];
+
+    const input = document.querySelector('p-calendar input');
+    if (!input) return;
+
+    // Open Picker
+    input.click();
+    await wait(500);
+
+    let popup = document.querySelector('.ui-datepicker');
+    if (!popup) {
+      console.warn('RailAssist: Calendar popup not found');
+      return;
+    }
+
+    // Navigation Loop
+    let attempts = 0;
+    while (attempts < 12) { // Max 12 months ahead
+      const currentMonthEl = popup.querySelector('.ui-datepicker-month');
+      const currentYearEl = popup.querySelector('.ui-datepicker-year');
+      
+      const currentMonth = currentMonthEl?.textContent?.trim();
+      const currentYear = parseInt(currentYearEl?.textContent?.trim() || "0");
+
+      if (currentMonth === targetMonthName && currentYear === tYear) break;
+
+      // Decide direction
+      const isFuture = tYear > currentYear || (tYear === currentYear && (monthNames.indexOf(targetMonthName) > monthNames.indexOf(currentMonth)));
+      const navBtn = popup.querySelector(isFuture ? '.ui-datepicker-next' : '.ui-datepicker-prev');
+      
+      if (!navBtn) break;
+      navBtn.click();
+      await wait(300);
+      attempts++;
+    }
+
+    // Select Day
+    const days = Array.from(popup.querySelectorAll('td a.ui-state-default, td span.ui-state-default'));
+    const dayEl = days.find(el => el.textContent.trim() === String(tDay) && !el.parentElement.classList.contains('ui-datepicker-other-month'));
+    
+    if (dayEl) {
+      dayEl.click();
+      console.log(`RailAssist: Selected date ${tDay} ${targetMonthName} ${tYear} via calendar`);
+    } else {
+      console.warn(`RailAssist: Could not find day ${tDay} in calendar`);
+      // Fallback: set value manually if calendar click fails
+      input.value = `${String(tDay).padStart(2, '0')}/${String(tMonth).padStart(2, '0')}/${tYear}`;
+      trigger(input, 'input');
+      trigger(input, 'change');
+    }
+  };
+
+  await selectCalendarDate(date);
 
   // 3. Class
   await wait(300);
@@ -140,27 +188,38 @@ export const fillJourney = async (journey) => {
   console.log('RailAssist: Universal journey fill sequence complete');
 };
 
+export const clearHighlights = () => {
+  const cards = document.querySelectorAll(".form-group.no-pad.col-xs-12.bull-back.border-all");
+  cards.forEach(card => {
+    card.style.border = "";
+    card.style.boxShadow = "";
+    card.style.backgroundColor = "";
+    const label = card.querySelector('.ra-highlight-label');
+    if (label) label.remove();
+  });
+};
+
+let hasScrolled = false;
+export const resetScrollFlag = () => { hasScrolled = false; };
+
 export const findAndHighlightTrain = async (trainNumber) => {
-  if (!trainNumber) return;
+  if (!trainNumber || hasScrolled) return;
 
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
   
-  // 2. WAIT FOR TRAIN LIST
+  // 1. WAIT FOR TRAIN LIST
   let attempts = 0;
   let cards = [];
   const selector = ".form-group.no-pad.col-xs-12.bull-back.border-all";
   
-  while (attempts < 20) {
+  while (attempts < 25) {
     cards = Array.from(document.querySelectorAll(selector));
     if (cards.length > 0) break;
     await wait(500);
     attempts++;
   }
 
-  if (cards.length === 0) {
-    console.warn('RailAssist: No train cards found on page with selector: ' + selector);
-    return;
-  }
+  if (cards.length === 0) return;
 
   // 4. MATCH TRAIN NUMBER
   let targetCard = null;
@@ -178,44 +237,46 @@ export const findAndHighlightTrain = async (trainNumber) => {
 
   // 5. SCROLL TO MATCH
   if (targetCard) {
-    console.log(`RailAssist: Found and matching train ${trainNumber}`);
+    hasScrolled = true;
+    console.log(`RailAssist: Auto-scrolling to train ${trainNumber}`);
+
+    const performScroll = () => {
+      const rect = targetCard.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetY = rect.top + scrollTop - (window.innerHeight / 2) + (rect.height / 2);
+
+      window.scrollTo({
+        top: targetY,
+        behavior: "auto"
+      });
+    };
+
+    // First scroll → immediate
+    performScroll();
+
+    // 6. SECOND SCROLL (Override IRCTC re-render)
+    await wait(100);
+    performScroll();
     
-    targetCard.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
+    // 7. HIGHLIGHT MATCHED TRAIN
+    clearHighlights();
+    targetCard.style.border = "3px solid #ff6600";
+    targetCard.style.boxShadow = "0 0 20px rgba(255,102,0,0.6)";
+    targetCard.style.backgroundColor = "rgba(255, 102, 0, 0.08)";
     
-    // 6. HIGHLIGHT MATCHED TRAIN
-    targetCard.style.border = "2px solid #ff6600";
-    targetCard.style.boxShadow = "0 0 10px rgba(255,102,0,0.6)";
-    targetCard.style.transition = "all 0.3s ease";
-    
-    // Optional: temporary background highlight
-    const originalBg = targetCard.style.backgroundColor;
-    targetCard.style.backgroundColor = "rgba(255, 102, 0, 0.05)";
-    
-    // Add Ra-Highlight label if not present
     if (!targetCard.querySelector('.ra-highlight-label')) {
       const label = document.createElement('div');
       label.className = 'ra-highlight-label';
       label.textContent = 'SELECTED TRAIN';
       label.style.cssText = `
-        position: absolute;
-        top: -10px;
-        left: 15px;
-        background: #ff6600;
-        color: white;
-        padding: 1px 8px;
-        border-radius: 4px;
-        font-size: 9px;
-        font-weight: bold;
-        z-index: 5;
+        position: absolute; top: -14px; left: 20px;
+        background: #ff6600; color: white;
+        padding: 2px 12px; border-radius: 6px;
+        font-size: 11px; font-weight: bold; z-index: 10;
       `;
       targetCard.style.position = 'relative';
       targetCard.appendChild(label);
     }
-  } else {
-    console.warn(`RailAssist: Train ${trainNumber} not found in DOM`);
   }
 };
 
