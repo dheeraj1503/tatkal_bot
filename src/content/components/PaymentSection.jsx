@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { QrCode, CreditCard } from 'lucide-react';
+import { fillPaymentMethod } from '../utils/autofill';
 
 export default function PaymentSection({ payment, onChange }) {
   const [tab, setTab] = useState(payment.method || 'UPI');
@@ -7,7 +8,12 @@ export default function PaymentSection({ payment, onChange }) {
 
   const handleTabSwitch = (t) => {
     setTab(t);
-    update('method', t);
+    // Enforce mutual exclusivity by clearing unused fields
+    if (t === 'UPI') {
+      onChange({ ...payment, method: 'UPI', cardNumber: '', cardExpiry: '', cardCvv: '' });
+    } else {
+      onChange({ ...payment, method: 'Card', upiId: '' });
+    }
   };
 
   return (
@@ -45,7 +51,10 @@ export default function PaymentSection({ payment, onChange }) {
               className="flex-1 bg-transparent border-none outline-none py-3.5 text-[13px] font-semibold text-gray-800 dark:text-white placeholder-gray-300 dark:placeholder-gray-600"
             />
           </div>
-          <button className="px-6 bg-brand-blue hover:bg-blue-700 active:scale-95 text-white font-bold text-[13px] rounded-xl shadow-md shadow-blue-500/20 transition-all">
+          <button 
+            onClick={() => fillPaymentMethod(payment)}
+            className="px-6 bg-brand-blue hover:bg-blue-700 active:scale-95 text-white font-bold text-[13px] rounded-xl shadow-md shadow-blue-500/20 transition-all"
+          >
             Fill
           </button>
         </div>
@@ -84,8 +93,11 @@ export default function PaymentSection({ payment, onChange }) {
               className="bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-3 py-3 text-[13px] font-semibold text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-blue/30 placeholder-gray-300 dark:placeholder-gray-600"
             />
           </div>
-          <button className="w-full py-3 bg-brand-blue hover:bg-blue-700 active:scale-95 text-white font-bold text-[13px] rounded-xl shadow-md shadow-blue-500/20 transition-all">
-            Fill Card Details
+          <button 
+            onClick={() => fillPaymentMethod(payment)}
+            className="w-full py-3 bg-brand-blue hover:bg-blue-700 active:scale-95 text-white font-bold text-[13px] rounded-xl shadow-md shadow-blue-500/20 transition-all"
+          >
+            Select Card Option
           </button>
         </div>
       )}

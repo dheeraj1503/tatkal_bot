@@ -7,7 +7,6 @@ import JourneySection from './JourneySection';
 import TrainSection from './TrainSection';
 import PassengerSection from './PassengerSection';
 import ContactSection from './ContactSection';
-import PaymentSection from './PaymentSection';
 import { getTickets, saveTickets, getDarkMode, saveDarkMode } from '../../utils/storage';
 import { findAndHighlightTrain } from '../utils/autofill';
 
@@ -32,7 +31,6 @@ const makeTicket = () => {
       { name: '', age: '', gender: 'Male', berth: 'No Pref' },
     ],
     contact: { mobile: '' },
-    payment: { method: 'UPI', upiId: '' },
   };
 };
 
@@ -183,10 +181,6 @@ export default function App({ shadowRoot }) {
               <ContactSection
                 contact={ticket.contact || { mobile: '' }}
                 onChange={(c) => updateTicket(t => ({ ...t, contact: c }))}
-              />
-              <PaymentSection
-                payment={ticket.payment}
-                onChange={(p) => updateTicket(t => ({ ...t, payment: p }))}
               />
             </div>
           </div>

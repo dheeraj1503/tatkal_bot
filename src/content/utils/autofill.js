@@ -509,3 +509,35 @@ export const fillContact = async (mobileNumber) => {
     console.error('RailAssist: Mobile number input not found');
   }
 };
+
+export const fillPaymentMethod = async (payment) => {
+  if (!payment || !payment.method) return;
+  const trigger = (el, type) => el.dispatchEvent(new Event(type, { bubbles: true }));
+
+  const selectRadio = (id, value) => {
+    // Try by value first
+    const radioInput = document.querySelector(`input[name="paymentType"][value="${value}"]`);
+    if (radioInput) {
+      radioInput.click();
+      trigger(radioInput, 'change');
+      return true;
+    }
+    // Fallback to PrimeNG ID
+    const pRadio = document.querySelector(`p-radiobutton[id="${id}"] .ui-radiobutton-box`);
+    if (pRadio) {
+      pRadio.click();
+      return true;
+    }
+    return false;
+  };
+
+  if (payment.method === 'UPI') {
+    const success = selectRadio('2', '2');
+    if (success) console.log('RailAssist: Selected BHIM/UPI payment option');
+    else console.warn('RailAssist: Could not find BHIM/UPI radio button');
+  } else if (payment.method === 'Card') {
+    const success = selectRadio('3', '3');
+    if (success) console.log('RailAssist: Selected Card/Netbanking payment option');
+    else console.warn('RailAssist: Could not find Card radio button');
+  }
+};

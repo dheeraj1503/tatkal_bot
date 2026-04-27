@@ -38,6 +38,15 @@ function mountSidebar() {
   // Mount React app
   const root = createRoot(mountEl);
   root.render(<App shadowRoot={shadow} />);
+
+  // Ensure RailAssist stays on top of everything (like AskDisha)
+  // by keeping it as the absolute last element in the body.
+  const observer = new MutationObserver(() => {
+    if (document.body.lastElementChild !== host) {
+      document.body.appendChild(host);
+    }
+  });
+  observer.observe(document.body, { childList: true });
 }
 
 // Listen for toggle message from background service worker
