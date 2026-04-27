@@ -325,7 +325,7 @@ export const fillPassenger = async (passenger, index) => {
   let attempts = 0;
   
   while (nameInputs.length <= index && attempts < 5) {
-    const addBtn = Array.from(document.querySelectorAll('a, span')).find(el => el.textContent.includes('Add Passenger'));
+    const addBtn = Array.from(document.querySelectorAll('a, span')).find(el => el.textContent?.includes('Add Passenger'));
     if (!addBtn) {
       console.warn(`RailAssist: Cannot find Add Passenger button to add row ${index + 1}`);
       break;
@@ -471,7 +471,7 @@ export const fillCredentials = (username, password) => {
 
   // If not found, look for login button and click it if it exists
   const loginBtn = Array.from(document.querySelectorAll('a, button')).find(el => 
-    el.textContent.includes('LOGIN') || el.innerText.includes('LOGIN')
+    el.textContent?.includes('LOGIN') || el.innerText?.includes('LOGIN')
   );
   
   if (loginBtn) {

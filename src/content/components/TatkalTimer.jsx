@@ -1,20 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Info } from 'lucide-react';
 
-function getTimeUntilTatkal() {
+function getTimeUntilTatkal(mode) {
   const now = new Date();
   const target = new Date();
-  // AC Tatkal opens at 10:00 AM, SL at 11:00 AM
+  
+  const targetHour = mode === 'AC' ? 10 : 11;
   const hour = now.getHours();
-  if (hour < 10) {
-    target.setHours(10, 0, 0, 0);
-  } else if (hour < 11) {
-    target.setHours(11, 0, 0, 0);
+  
+  // If current time is before the target time today
+  if (hour < targetHour) {
+    target.setHours(targetHour, 0, 0, 0);
   } else {
-    // Next day 10 AM
+    // Next day
     target.setDate(target.getDate() + 1);
-    target.setHours(10, 0, 0, 0);
+    target.setHours(targetHour, 0, 0, 0);
   }
+  
   return Math.max(0, target - now);
 }
 
@@ -28,15 +30,22 @@ function fmtMs(ms) {
 
 export default function TatkalTimer() {
   const [mode, setMode] = useState('AC'); // AC | SL
-  const [remaining, setRemaining] = useState(getTimeUntilTatkal());
+  const [remaining, setRemaining] = useState(getTimeUntilTatkal('AC'));
   const timerRef = useRef(null);
 
   useEffect(() => {
+    // Update immediately when mode changes
+    setRemaining(getTimeUntilTatkal(mode));
+    
+    // Clear any existing interval before setting a new one
+    if (timerRef.current) clearInterval(timerRef.current);
+    
     timerRef.current = setInterval(() => {
-      setRemaining(getTimeUntilTatkal());
+      setRemaining(getTimeUntilTatkal(mode));
     }, 1000);
+    
     return () => clearInterval(timerRef.current);
-  }, []);
+  }, [mode]);
 
   const totalWindow = 3600 * 1000; // 1 hour reference for progress
   const progress = Math.min(100, Math.max(0, ((totalWindow - remaining) / totalWindow) * 100));
