@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
+import { fillPassenger } from '../utils/autofill';
 
 const BERTH_OPTIONS  = ['No Pref', 'Lower', 'Middle', 'Upper', 'Side Lower', 'Side Upper'];
 const GENDER_OPTIONS = ['Male', 'Female', 'Transgender'];
@@ -20,7 +21,10 @@ export default function PassengerCard({ passenger, index, onUpdate, onDelete }) 
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 text-[11px] font-bold rounded-lg border border-blue-100/50 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+          <button 
+            onClick={() => fillPassenger(passenger, index)}
+            className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-brand-blue dark:text-blue-400 text-[11px] font-bold rounded-lg border border-blue-100/50 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+          >
             Fill
           </button>
           <button onClick={onDelete} className="p-1 text-gray-400 hover:text-red-500 transition-colors">

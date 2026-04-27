@@ -311,6 +311,125 @@ export const findAndHighlightTrain = async (trainNumber) => {
   }
 };
 
+export const fillPassenger = async (passenger, index) => {
+  if (!passenger) return;
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const trigger = (el, type) => el.dispatchEvent(new Event(type, { bubbles: true }));
+
+  console.log(`RailAssist: Starting fill for passenger ${index + 1}`, passenger);
+
+  const getNameInputs = () => Array.from(document.querySelectorAll('p-autocomplete[formcontrolname="passengerName"] input, input[formcontrolname="passengerName"], input[placeholder="Name"]'));
+
+  // 1. Ensure the row exists by checking the number of Name inputs
+  let nameInputs = getNameInputs();
+  let attempts = 0;
+  
+  while (nameInputs.length <= index && attempts < 5) {
+    const addBtn = Array.from(document.querySelectorAll('a, span')).find(el => el.textContent.includes('Add Passenger'));
+    if (!addBtn) {
+      console.warn(`RailAssist: Cannot find Add Passenger button to add row ${index + 1}`);
+      break;
+    }
+    console.log(`RailAssist: Clicking Add Passenger...`);
+    addBtn.click();
+    await wait(300);
+    nameInputs = getNameInputs();
+    attempts++;
+  }
+
+  if (nameInputs.length <= index) {
+    console.error(`RailAssist: Row for passenger ${index + 1} could not be created/found!`);
+    return;
+  }
+
+  // Helper to get the correct input for this specific passenger index
+  const getField = (selector) => {
+    const fields = document.querySelectorAll(selector);
+    return fields[index];
+  };
+
+  // 2. Fill Name
+  const nameInput = nameInputs[index];
+  if (nameInput && passenger.name) {
+    nameInput.focus();
+    nameInput.value = '';
+    trigger(nameInput, 'input');
+    await wait(50);
+    nameInput.value = passenger.name;
+    trigger(nameInput, 'input');
+    trigger(nameInput, 'change');
+    nameInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    nameInput.blur();
+    console.log(`RailAssist: Filled name: ${passenger.name}`);
+    await wait(100);
+  } else {
+    console.warn(`RailAssist: Name input not found for pass ${index + 1}`);
+  }
+
+  // 3. Fill Age
+  const ageInput = getField('input[formcontrolname="passengerAge"], input[placeholder="Age"]');
+  if (ageInput && passenger.age) {
+    ageInput.focus();
+    ageInput.value = passenger.age;
+    trigger(ageInput, 'input');
+    trigger(ageInput, 'change');
+    ageInput.blur();
+    console.log(`RailAssist: Filled age: ${passenger.age}`);
+  } else {
+    console.warn(`RailAssist: Age input not found for pass ${index + 1}`);
+  }
+
+  // 4. Fill Gender
+  const genderSelect = getField('select[formcontrolname="passengerGender"]');
+  if (genderSelect && passenger.gender) {
+    const genderMap = { 'Male': 'M', 'Female': 'F', 'Transgender': 'T' };
+    genderSelect.focus();
+    genderSelect.value = genderMap[passenger.gender] || passenger.gender;
+    trigger(genderSelect, 'change');
+    genderSelect.blur();
+    console.log(`RailAssist: Filled gender: ${genderSelect.value}`);
+  } else {
+    console.warn(`RailAssist: Gender select not found for pass ${index + 1}`);
+  }
+
+  // 5. Fill Berth Preference
+  const berthSelect = getField('select[formcontrolname="passengerBerthChoice"]');
+  if (berthSelect && passenger.berth) {
+    const berthMap = {
+      'No Pref': '', 'Lower': 'LB', 'Middle': 'MB', 'Upper': 'UB', 
+      'Side Lower': 'SL', 'Side Upper': 'SU'
+    };
+    berthSelect.focus();
+    berthSelect.value = berthMap[passenger.berth] || '';
+    trigger(berthSelect, 'change');
+    berthSelect.blur();
+    console.log(`RailAssist: Filled berth: ${berthSelect.value}`);
+  }
+
+  // 6. Fill Food Choice
+  const foodSelect = getField('select[formcontrolname="passengerFoodChoice"]');
+  if (foodSelect && passenger.food) {
+    const foodMap = { 'Veg': 'V', 'Non Veg': 'N', 'Jain': 'J', 'None': 'D' };
+    foodSelect.focus();
+    foodSelect.value = foodMap[passenger.food] || 'D';
+    trigger(foodSelect, 'change');
+    foodSelect.blur();
+    console.log(`RailAssist: Filled food: ${foodSelect.value}`);
+  }
+
+  console.log(`RailAssist: Completed passenger ${index + 1}`);
+};
+
+export const fillAllPassengers = async (passengers) => {
+  if (!passengers || !Array.isArray(passengers)) return;
+  
+  // Fill them sequentially to avoid race conditions with "Add Passenger"
+  for (let i = 0; i < passengers.length; i++) {
+    await fillPassenger(passengers[i], i);
+  }
+  console.log('RailAssist: Bulk passenger fill complete');
+};
+
 export const fillCredentials = (username, password) => {
   const findAndFill = () => {
     const userField = 

@@ -1,6 +1,6 @@
-import React from 'react';
 import { Zap, Plus, User, ChevronUp } from 'lucide-react';
 import PassengerCard from './PassengerCard';
+import { fillAllPassengers } from '../utils/autofill';
 
 const NEW_PASSENGER = () => ({ name: '', age: '', gender: 'Male', berth: 'No Pref' });
 
@@ -27,7 +27,10 @@ export default function PassengerSection({ passengers, onChange }) {
             <User size={18} className="text-brand-blue" />
             <h3 className="text-[15px] font-bold text-gray-800 dark:text-white">Passenger Details</h3>
           </div>
-          <button className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-full transition-all text-[12px] font-bold shadow-sm">
+          <button 
+            onClick={() => fillAllPassengers(passengers)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-full transition-all text-[12px] font-bold shadow-sm"
+          >
             <Zap size={13} strokeWidth={2.5} className="fill-white" />
             Fill All
           </button>
