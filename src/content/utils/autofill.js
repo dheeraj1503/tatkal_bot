@@ -491,3 +491,21 @@ export const fillCredentials = (username, password) => {
 
   return true;
 };
+
+export const fillContact = async (mobileNumber) => {
+  if (!mobileNumber) return;
+  const trigger = (el, type) => el.dispatchEvent(new Event(type, { bubbles: true }));
+
+  const mobileInput = document.querySelector('input[formcontrolname="mobileNumber"]') || document.getElementById('mobileNumber');
+  
+  if (mobileInput) {
+    mobileInput.focus();
+    mobileInput.value = mobileNumber;
+    trigger(mobileInput, 'input');
+    trigger(mobileInput, 'change');
+    mobileInput.blur();
+    console.log(`RailAssist: Filled mobile number: ${mobileNumber}`);
+  } else {
+    console.error('RailAssist: Mobile number input not found');
+  }
+};
